@@ -1,8 +1,11 @@
+use std::cmp::min;
 use clap::Parser;
 use std::io::{self, BufRead, BufReader};
 use std::fs::File;
+use std::thread;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::io::Write;
+use std::time::Duration;
 
 // Search for a pattern in a file and display the lines that contain it.
 #[derive(Parser)]
@@ -31,27 +34,22 @@ fn main() -> io::Result<()> {
     .progress_chars("#>-"),);
     let f = File::open(&args.path)?;
     let reader = BufReader::new(f);    
-
+    let mut count = 0;
     let mut position = 0;
 
     for line_content in reader.lines(){
-
         let line = line_content?;
-        position +=  line.len() as u64 + 1;
+        let new = min(position + line.len() as u64 + 1, totalsize);
         if line.contains(&args.pattern){
 
-
-            println!("{}", line);
+            count += 1;
         }
-
-        pb.set_position(position);
-
+        position = new;;
+        pb.set_position(new);
+        thread::sleep(Duration::from_millis((5)));
     }
 
-    io::stdout().flush()?;
 
-    println!("Search has been completed!!!");
+    println!("Search has been completed!!!, there are {} instances", count);
     Ok(())
 }
-
-
